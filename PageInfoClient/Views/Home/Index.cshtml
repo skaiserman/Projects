@@ -1,0 +1,179 @@
+﻿
+@model PageInfoClient.Models.PageInfo
+@{
+    Layout = null;
+
+    ViewBag.Title = "Information App";
+
+    var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+    var dataPoints = jss.Serialize(ViewBag.DataPoints);
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Url Info</title>
+    <link href="~/Content/Site.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="~/Scripts/modernizr-2.6.2.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script>
+        function ShowChart() {
+            var jsonData = JSON.parse('@Html.Raw(dataPoints)');
+            Highcharts.chart('container', {
+                chart: {
+                    plotBackgroundColor: null,
+                    plotBorderWidth: null,
+                    plotShadow: false,
+                    type: 'pie'
+                },
+                title: {
+                    text: 'Top 10 words'
+                },
+                tooltip: {
+                    pointFormat: '{series.name}: <b>{point.y}</b>'
+                },
+                plotOptions: {
+                    pie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
+                        dataLabels: {
+                            enabled: false
+                        },
+                        showInLegend: true
+                    }
+                },
+                series: [{
+                    name: 'Count',
+                    colorByPoint: true,
+                    data: jsonData
+                }]
+            });
+        }
+
+    </script>
+</head>
+<body style="width:500px;margin:auto">
+    @using (Html.BeginForm("Index", "Home", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+        <div class="container">
+            <h4>Url Info (Images & words)</h4>
+            <div class="row">
+
+                <div class="col">
+                    <label class="label">Enter a Url <b>including http:// or https://</b> </label>
+                    @Html.TextBoxFor(m => m.Url, new { @class = "form-control", required = "required" })
+                    <label class="alert-danger">@Html.ValidationMessageFor(m => m.Url)</label>
+                    <input type="submit" class="btn-primary" value="Get Information" />
+                </div>
+            </div>
+            <hr />
+            @{ if (Model != null)
+                {
+
+                    <div class="row">
+                        <div class="col" align="center">
+                            <h4>List of Images</h4>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group" style="background-color:lightgray">
+                            @foreach (var src in Model.Images)
+                            {
+                                @Html.Raw("<img src=" + src + " height=\"50\" width=\"120\">")
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col" align="center">
+                            <h4>Carousel</h4>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div id="demo" class="carousel slide" data-ride="carousel" data-interval="2000">
+                                <!-- The slideshow -->
+                                <div class="carousel-inner">
+
+                                    @{int i = 0;}
+                                    @foreach (var item in Model.Images)
+                                    {
+                                        i++;
+                                        var active = i == 1 ? "active" : "";
+                                        <div class="carousel-item @active">
+                                            <img class="d-block w-100" src="@Url.Content(@item)" alt="">
+                                        </div>
+                                    }
+                                </div>
+                                <!-- Left and right controls -->
+                                <a class="carousel-control-prev" href="#demo" data-slide="prev">
+                                    <span class="carousel-control-prev-icon"></span>
+                                </a>
+                                <a class="carousel-control-next" href="#demo" data-slide="next">
+                                    <span class="carousel-control-next-icon"></span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+
+                    <div class="row">
+                        <div class="col" align="center">
+                            <h4>Words information</h4>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="label">Total Words of Body tag: @Model.TotalWords</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div id="container" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+                            <Script>ShowChart();</Script>
+                        </div>
+
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Word found</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                foreach (var word in Model.Words)
+                                {
+                                    if (!String.IsNullOrEmpty(word.Word))
+                                    {
+
+                                        <tr>
+                                            <td>@word.Word.Trim()</td>
+                                            <td>@word.Count</td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+
+
+                }
+            }
+        </div>
+
+    }
+</body>
+</html>
